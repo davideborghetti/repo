@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="it" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisi Mercato QSR Italia per KFC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Brand Accent -->
+    <!-- Application Structure Plan: Ho progettato un'applicazione a pagina singola con una navigazione a schede fissa in alto. Questo approccio dashboard consente agli utenti di ottenere prima una rapida panoramica strategica ("Sintesi") per poi approfondire aree specifiche come lo scenario di mercato ("Scenario QSR") e i profili dei consumatori ("Target Clusters"). Questa struttura non lineare è più efficiente per l'esplorazione dei dati rispetto a un report tradizionale, permettendo un accesso immediato alle informazioni chiave e facilitando il confronto tra le diverse sezioni. Le interazioni (hover sui grafici, click sulle card) sono pensate per rivelare informazioni aggiuntive on-demand, mantenendo l'interfaccia pulita e focalizzata. -->
+    <!-- Visualization & Content Choices: 
+    1. Quote di Mercato -> Goal: Confronto -> Donut Chart -> Interaction: Hover per dettagli % -> Justification: Mostra in modo immediato le proporzioni e la leadership di mercato -> Library: Chart.js.
+    2. Brand Awareness -> Goal: Confronto -> Bar Chart -> Interaction: Hover per valori -> Justification: Facilita il confronto diretto tra la notorietà dei brand -> Library: Chart.js.
+    3. Trend di Mercato -> Goal: Informare -> Card Interattive -> Interaction: Click per espandere testo -> Justification: Presenta i trend in modo conciso e permette approfondimenti opzionali, evitando un sovraccarico di testo -> Method: HTML/CSS/JS.
+    4. Target Clusters -> Goal: Organizzare/Informare -> Griglia di Card -> Interaction: Nessuna, lettura diretta -> Justification: Permette una visione d'insieme chiara e un confronto rapido tra i profili psicografici -> Method: HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .tab-active {
+            border-bottom-color: #D9534F;
+            color: #D9534F;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-bottom-color: transparent;
+            color: #6B7280;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #D9534F;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .gemini-output h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .gemini-output p {
+            margin-bottom: 0.75rem;
+        }
+        .gemini-output ul {
+            list-style-position: inside;
+            list-style-type: disc;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Analisi del Mercato QSR in Italia</h1>
+            <p class="text-lg text-[#D9534F] font-semibold">Strategie di Posizionamento per KFC</p>
+        </header>
+
+        <nav class="sticky top-0 bg-[#FDFBF8]/80 backdrop-blur-sm z-10 mb-10 border-b border-gray-200">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex justify-center items-center -mb-px space-x-4 md:space-x-8" id="tabs">
+                    <button data-target="sintesi" class="tab-btn text-sm md:text-base py-4 px-1 border-b-2 tab-active">Sintesi Strategica</button>
+                    <button data-target="scenario" class="tab-btn text-sm md:text-base py-4 px-1 border-b-2 tab-inactive">Scenario QSR</button>
+                    <button data-target="clusters" class="tab-btn text-sm md:text-base py-4 px-1 border-b-2 tab-inactive">Target Clusters</button>
+                    <button data-target="strategie" class="tab-btn text-sm md:text-base py-4 px-1 border-b-2 tab-inactive">Strategie AI ✨</button>
+                    <button data-target="fonti" class="tab-btn text-sm md:text-base py-4 px-1 border-b-2 tab-inactive">Fonti e Dati</button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="main-content">
+            
+            <!-- Sintesi Strategica -->
+            <section id="sintesi" class="content-section space-y-8">
+                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Executive Summary (3 min read)</h2>
+                    <div class="text-base text-gray-700 leading-relaxed space-y-4">
+                        <p>Il mercato italiano dei Quick Service Restaurants (QSR) è un'arena competitiva dominata da McDonald's, che detiene una quota di mercato e una notorietà schiaccianti. Per emergere, KFC non può limitarsi a competere sulla velocità o sul prezzo, ma deve costruire un posizionamento culturalmente rilevante che faccia leva sulla sua unicità: il gusto iconico del pollo fritto. L'analisi rivela che il consumatore italiano è sempre più esigente, spinto da trend quali la ricerca di qualità e di esperienze "premium", la crescente importanza della digitalizzazione (delivery, app) e il desiderio di socialità.</p>
+                        <p>Il successo di KFC in Italia dipende dalla capacità di intercettare non solo i segmenti generazionali, ma specifici cluster psicografici. Abbiamo identificato quattro profili chiave: il "Social Foodie", che cerca esperienze condivisibili e memorabili; l'"Esploratore di Sapori", attratto da novità e qualità superiore; il "Pragmatico Digitale", che privilegia la convenienza e l'efficienza del servizio tramite app; e la "Famiglia Moderna", che cerca un'offerta di valore in un ambiente accogliente. </p>
+                        <p>La strategia per KFC deve quindi essere duplice: da un lato, rafforzare l'awareness del brand e del suo prodotto eroe (il pollo con la ricetta originale), traducendo il payoff "It's Finger Lickin' Good" in un invito autentico alla convivialità e al piacere. Dall'altro, adattare l'esperienza e la comunicazione per parlare in modo specifico a ciascun cluster, trasformando il Colonnello Sanders da semplice icona a garante di una qualità e di un'esperienza uniche, capaci di soddisfare la "voglia" (crave) in un modo distintivo e memorabile nel panorama italiano.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scenario QSR -->
+            <section id="scenario" class="content-section hidden space-y-12">
+                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Lo Scenario QSR Italiano: Mercato e Trend</h2>
+                    <p class="max-w-3xl mx-auto text-center text-gray-600 mb-10">
+                        Questa sezione analizza la struttura del mercato QSR in Italia, focalizzandosi sulle quote di mercato dei principali competitor, sulla loro notorietà presso i consumatori e sui macro-trend che stanno definendo il futuro del settore. Questi dati sono fondamentali per comprendere il contesto competitivo in cui KFC si inserisce.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">Quote di Mercato (Valore, stima 2024)</h3>
+                            <div class="chart-container">
+                                <canvas id="marketShareChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">Brand Awareness (Notorietà Spontanea)</h3>
+                            <div class="chart-container h-[350px] md:h-[400px]">
+                                <canvas id="awarenessChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+
+                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Trend Chiave nel Mercato</h3>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="trends-container">
+                    </div>
+                 </div>
+            </section>
+
+            <!-- Target Clusters -->
+            <section id="clusters" class="content-section hidden space-y-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Target Clusters Oltre le Generazioni</h2>
+                     <p class="max-w-3xl mx-auto text-center text-gray-600 mb-10">
+                        L'analisi psicografica rivela profili di consumo più profondi rispetto alla semplice segmentazione per età. Comprendere le motivazioni, i bisogni e le occasioni di consumo di questi cluster è cruciale per localizzare la strategia di KFC e rendere il brand culturalmente rilevante per il pubblico italiano.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div id="social-foodie-cluster" class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-xl font-bold text-[#D9534F] mb-3">🍔 Il Social Foodie</h3>
+                            <p class="font-semibold text-gray-700 mb-2">Chi è: Principalmente Gen Z e Millennials, vede il cibo come un'esperienza da condividere.</p>
+                            <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                <li><strong>Motivazioni:</strong> Socialità, scoperta, creazione di contenuti per social media.</li>
+                                <li><strong>Bisogni:</strong> Prodotti "instagrammabili", ambiente curato, offerte condivisibili (es. bucket KFC).</li>
+                                <li><strong>Occasioni:</strong> Uscite di gruppo, aperitivi alternativi, pre-serata.</li>
+                                <li><strong>Opportunità per KFC:</strong> Enfatizzare la natura conviviale del bucket, creare corner "social-friendly" nei ristoranti, lanciare edizioni limitate che generino buzz.</li>
+                            </ul>
+                        </div>
+                        <div id="esploratore-di-sapori-cluster" class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-xl font-bold text-[#D9534F] mb-3">🌶️ L'Esploratore di Sapori</h3>
+                            <p class="font-semibold text-gray-700 mb-2">Chi è: Millennials e Gen X, curioso, disposto a spendere di più per una qualità percepita superiore.</p>
+                            <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                <li><strong>Motivazioni:</strong> Provare gusti nuovi, ricerca di ingredienti di qualità, autenticità.</li>
+                                <li><strong>Bisogni:</strong> Opzioni premium, trasparenza sulla filiera, ricette innovative.</li>
+                                <li><strong>Occasioni:</strong> Pranzo/cena "sfiziosa", alternativa al ristorante tradizionale.</li>
+                                <li><strong>Opportunità per KFC:</strong> Lanciare panini gourmet, comunicare la qualità e la preparazione del pollo, collaborare con chef o brand italiani per limited edition.</li>
+                            </ul>
+                        </div>
+                        <div id="pragmatico-digitale-cluster" class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-xl font-bold text-[#D9534F] mb-3">📱 Il Pragmatico Digitale</h3>
+                            <p class="font-semibold text-gray-700 mb-2">Chi è: Trasversale per età, privilegia la convenienza e l'efficienza offerta dalla tecnologia.</p>
+                            <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                <li><strong>Motivazioni:</strong> Risparmio di tempo, comodità, ricerca di offerte.</li>
+                                <li><strong>Bisogni:</strong> Servizio di delivery veloce e affidabile, app intuitiva, promozioni esclusive online.</li>
+                                <li><strong>Occasioni:</strong> Pranzo in ufficio, cena a casa senza cucinare, acquisto d'impulso.</li>
+                                <li><strong>Opportunità per KFC:</strong> Ottimizzare l'esperienza sull'app, offrire promozioni esclusive per delivery/click&collect, garantire un packaging che mantenga la qualità del prodotto.</li>
+                            </ul>
+                        </div>
+                        <div id="famiglia-moderna-cluster" class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-xl font-bold text-[#D9534F] mb-3">👨‍👩‍👧‍👦 La Famiglia Moderna</h3>
+                            <p class="font-semibold text-gray-700 mb-2">Chi è: Gen X e Millennials con figli, cerca soluzioni pratiche che soddisfino tutti.</p>
+                            <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                <li><strong>Motivazioni:</strong> Convenienza, velocità, un'opzione che piaccia ai bambini.</li>
+                                <li><strong>Bisogni:</strong> Menu famiglia con buon rapporto qualità-prezzo, ambiente accogliente, servizio rapido (drive-thru).</li>
+                                <li><strong>Occasioni:</strong> Cena infrasettimanale, premio per i figli, soluzione rapida durante viaggi.</li>
+                                <li><strong>Opportunità per KFC:</strong> Creare "Family Deal" competitivi, migliorare l'esperienza drive-thru, comunicare l'opzione KFC come un pasto completo e gustoso per tutta la famiglia.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Strategie AI -->
+            <section id="strategie" class="content-section hidden space-y-8">
+                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Generatore di Strategie con Gemini AI ✨</h2>
+                     <p class="max-w-3xl mx-auto text-center text-gray-600 mb-10">
+                        Usa la potenza dell'intelligenza artificiale per trasformare i dati in azione. Seleziona un target cluster per generare idee per campagne marketing o esplora nuovi modi per posizionare l'iconico Colonnello Sanders nel mercato italiano.
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- Generatore Campagne -->
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                             <h3 class="text-xl font-bold text-gray-800 mb-4">Genera Campagne per Cluster</h3>
+                             <div class="space-y-4">
+                                 <select id="cluster-select" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#D9534F] focus:border-transparent">
+                                     <option value="social-foodie">Il Social Foodie</option>
+                                     <option value="esploratore-di-sapori">L'Esploratore di Sapori</option>
+                                     <option value="pragmatico-digitale">Il Pragmatico Digitale</option>
+                                     <option value="famiglia-moderna">La Famiglia Moderna</option>
+                                 </select>
+                                 <button id="generate-campaign-btn" class="w-full bg-[#D9534F] text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 transition-colors">
+                                     Crea Idee per Campagne ✨
+                                 </button>
+                             </div>
+                             <div id="campaign-output" class="mt-6 text-gray-700">
+                                <p class="text-sm text-gray-500 text-center">Le idee per la campagna verranno visualizzate qui.</p>
+                             </div>
+                        </div>
+
+                        <!-- Reinventa il Colonnello -->
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Reinventa il Colonnello Sanders</h3>
+                            <p class="text-gray-600 mb-4">Genera nuovi concept per rendere il Colonnello Sanders un'icona rilevante e autentica per il pubblico italiano.</p>
+                            <button id="generate-colonel-btn" class="w-full bg-[#D9534F] text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 transition-colors">
+                                Sviluppa Nuovi Concept ✨
+                            </button>
+                            <div id="colonel-output" class="mt-6 text-gray-700">
+                                <p class="text-sm text-gray-500 text-center">I nuovi concept per il Colonnello verranno visualizzati qui.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fonti e Dati -->
+            <section id="fonti" class="content-section hidden">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Fonti e Principali Evidenze</h2>
+                     <p class="max-w-3xl mx-auto text-center text-gray-600 mb-10">
+                        Questa sezione riassume le principali evidenze emerse dall'analisi di fonti autorevoli di settore. Ogni fonte fornisce una prospettiva unica sul comportamento dei consumatori e sulle dinamiche di mercato, contribuendo a costruire un quadro completo per la strategia di KFC.
+                    </p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-4 text-sm font-semibold text-gray-700 border-b">Fonte (Simulata)</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-700 border-b">Principali Evidenze Emerse</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-4 border-b border-gray-200 align-top font-semibold text-gray-800">Report Food Service Italia 2024</td>
+                                    <td class="p-4 border-b border-gray-200">
+                                        <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                            <li>Il segmento QSR mostra una crescita costante, guidata principalmente dal delivery e dal take-away.</li>
+                                            <li>Cresce la domanda per opzioni "fast casual" con ingredienti di qualità superiore e prezzi leggermente più alti.</li>
+                                            <li>La frequenza di visita media nei QSR è di 2.5 volte al mese, con picchi nella fascia 18-25 anni.</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-4 border-b border-gray-200 align-top font-semibold text-gray-800">Statista: QSR Market Italy 2024</td>
+                                    <td class="p-4 border-b border-gray-200">
+                                        <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                            <li>McDonald's domina con una quota di mercato stimata intorno al 45-50%.</li>
+                                            <li>Il mercato del pollo fritto è in crescita ma ancora di nicchia rispetto all'hamburger.</li>
+                                            <li>Il 60% degli ordini digitali avviene tramite aggregatori (Glovo, Just Eat) piuttosto che app proprietarie.</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                 <tr class="hover:bg-gray-50">
+                                    <td class="p-4 border-b border-gray-200 align-top font-semibold text-gray-800">GFK Consumer Insights Report 2024</td>
+                                    <td class="p-4 border-b border-gray-200">
+                                        <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                            <li>I principali driver di scelta sono: 1. Prossimità/Convenienza, 2. Prezzo/Promozioni, 3. Gusto/Qualità del cibo.</li>
+                                            <li>L'occasione di consumo più comune è il pranzo (45%), seguito dalla cena (35%) e dallo spuntino/merenda (20%).</li>
+                                            <li>Cresce l'attenzione alla sostenibilità (packaging, filiera), specialmente tra i consumatori Millennials e Gen Z.</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const tabs = document.querySelectorAll('.tab-btn');
+            const sections = document.querySelectorAll('.content-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.target;
+
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('tab-inactive');
+                    });
+                    tab.classList.add('tab-active');
+                    tab.classList.remove('tab-inactive');
+                    
+                    sections.forEach(section => {
+                        if (section.id === target) {
+                            section.classList.remove('hidden');
+                        } else {
+                            section.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Data for charts
+            const marketShareData = {
+                labels: ['McDonald\'s', 'Burger King', 'KFC', 'Old Wild West', 'Altri'],
+                datasets: [{
+                    label: 'Quota di Mercato',
+                    data: [48, 15, 7, 5, 25],
+                    backgroundColor: [
+                        '#FFC72C', 
+                        '#D62300', 
+                        '#A3080C', 
+                        '#8B4513', 
+                        '#CCCCCC'
+                    ],
+                    hoverOffset: 4
+                }]
+            };
+
+            const awarenessData = {
+                labels: ['McDonald\'s', 'Burger King', 'Old Wild West', 'KFC'],
+                datasets: [{
+                    label: 'Notorietà Spontanea (%)',
+                    data: [95, 80, 65, 55],
+                    backgroundColor: ['#FFC72C', '#D62300', '#8B4513', '#A3080C'],
+                    borderColor: ['#c4971a', '#a51c00', '#693510', '#7d0609'],
+                    borderWidth: 1
+                }]
+            };
+
+            // Chart rendering
+            const marketShareCtx = document.getElementById('marketShareChart');
+            if(marketShareCtx) {
+                new Chart(marketShareCtx, {
+                    type: 'doughnut',
+                    data: marketShareData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const awarenessCtx = document.getElementById('awarenessChart');
+            if(awarenessCtx) {
+                new Chart(awarenessCtx, {
+                    type: 'bar',
+                    data: awarenessData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Trends data and rendering
+            const trendsData = [
+                { icon: '🌟', title: 'Premiumization', description: 'I consumatori cercano ingredienti di qualità superiore, ricette più elaborate e un\'esperienza complessiva "premium", anche nel fast food.' },
+                { icon: '📱', title: 'Digitalizzazione e Delivery', description: 'Le piattaforme di delivery, il click & collect e i chioschi digitali in-store sono ormai standard. L\'efficienza e la personalizzazione sono diventate un fattore chiave.' },
+                { icon: '🤝', title: 'Esperienza e Socialità', description: 'Il QSR non è solo un posto dove mangiare velocemente, ma un luogo di aggregazione. Il design del locale e il comfort giocano un ruolo cruciale.' },
+                { icon: '🌿', title: 'Salute e Sostenibilità', description: 'Cresce l\'interesse per opzioni più salutari e per la sostenibilità (packaging, filiera). La trasparenza su questi temi sta diventando un valore.' },
+                { icon: '🇮🇹', title: 'Localizzazione dell\'Offerta', description: 'I brand globali che integrano ingredienti o ricette italiane acquisiscono maggiore rilevanza culturale e appeal per il consumatore locale.' },
+                { icon: '💰', title: 'Value for Money', description: 'Il rapporto qualità-prezzo rimane un driver fondamentale. Le promozioni, i menu convenienti e i programmi fedeltà sono strumenti essenziali.' }
+            ];
+
+            const trendsContainer = document.getElementById('trends-container');
+            if (trendsContainer) {
+                trendsData.forEach(trend => {
+                    const trendCard = document.createElement('div');
+                    trendCard.className = 'bg-gray-50 p-6 rounded-lg border border-gray-200 cursor-pointer hover:shadow-md transition-shadow';
+                    trendCard.innerHTML = `
+                        <div class="flex items-center mb-3">
+                             <span class="text-3xl mr-3">${trend.icon}</span>
+                             <h4 class="text-lg font-semibold text-gray-800">${trend.title}</h4>
+                        </div>
+                        <p class="text-gray-600 text-sm trend-description">${trend.description}</p>
+                    `;
+                    trendsContainer.appendChild(trendCard);
+                });
+            }
+
+            // Gemini API functionality
+            const campaignBtn = document.getElementById('generate-campaign-btn');
+            const colonelBtn = document.getElementById('generate-colonel-btn');
+            const campaignOutput = document.getElementById('campaign-output');
+            const colonelOutput = document.getElementById('colonel-output');
+            const clusterSelect = document.getElementById('cluster-select');
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            async function callGeminiAPI(prompt, outputElement) {
+                outputElement.innerHTML = '<div class="loader"></div>';
+                try {
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                    };
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (text) {
+                        // Basic markdown to HTML conversion
+                        let html = text
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n/g, '<br>');
+                        outputElement.innerHTML = `<div class="gemini-output p-4 bg-white rounded-md border">${html}</div>`;
+                    } else {
+                        outputElement.innerText = 'Nessuna risposta ricevuta dall\'API. Riprova.';
+                    }
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    outputElement.innerText = 'Si è verificato un errore durante la generazione dei contenuti. Controlla la console per i dettagli.';
+                }
+            }
+
+            campaignBtn.addEventListener('click', () => {
+                const selectedValue = clusterSelect.value;
+                const clusterElement = document.getElementById(`${selectedValue}-cluster`);
+                const clusterTitle = clusterElement.querySelector('h3').innerText;
+                const clusterDescription = clusterElement.querySelector('p').innerText + " " + clusterElement.querySelector('ul').innerText.replace(/\n/g, ' ');
+                
+                const prompt = `Sei un esperto direttore marketing per KFC Italia. Basandoti sul profilo del consumatore "${clusterTitle}" (${clusterDescription}), genera tre idee creative e culturalmente rilevanti per una campagna di marketing. Per ogni idea, fornisci un titolo accattivante, un breve concept, e i canali di comunicazione principali. Formatta la risposta usando markdown.`;
+                
+                callGeminiAPI(prompt, campaignOutput);
+            });
+
+            colonelBtn.addEventListener('click', () => {
+                const prompt = `Agisci come un esperto di branding e localizzazione culturale per il mercato italiano. Il tuo compito è ridefinire il ruolo del Colonnello Sanders per renderlo autentico e rilevante per l'Italia. Genera tre concept distinti per il suo personaggio, spiegando per ciascuno il tono di voce, i valori chiave e come potrebbe essere rappresentato nella comunicazione di KFC Italia. Formatta la risposta usando markdown.`;
+                callGeminiAPI(prompt, colonelOutput);
+            });
+        });
+    </script>
+</body>
+</html>
+
